@@ -3,7 +3,7 @@ from enum import Enum
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy import Enum as SQLAlchemyEnum 
 
-from .database import Base, engine
+from .database import Base
 
 # Define your Python Enum first
 class LearningResourceType(Enum):
@@ -15,13 +15,11 @@ class LearningResourceType(Enum):
 class LearningResource(Base):
     __tablename__ = "learning_resource" 
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String, index=True, nullable=False)
     description = Column(String, nullable=True)
-    # Use SQLAlchemyEnum to map your Python Enum to a database ENUM type
+    url = Column(String, nullable=True)
     resource_type = Column(SQLAlchemyEnum(LearningResourceType), nullable=False)
-    difficult = Column(Integer, default=1)
+    difficulty = Column(Integer, default=1)
     created_at = Column(DateTime, nullable=False, default=datetime.now())
 
-
-Base.metadata.create_all(engine)
