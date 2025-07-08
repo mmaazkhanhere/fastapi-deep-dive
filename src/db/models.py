@@ -19,7 +19,7 @@ class LearningResource(Base):
     title = Column(String, index=True, nullable=False)
     description = Column(String, nullable=True)
     url = Column(String, nullable=True)
-    resource_type = Column(SQLAlchemyEnum(LearningResourceType), nullable=False)
+    resource_type = Column(String, nullable=False)
     difficulty = Column(Integer, default=1)
     created_at = Column(DateTime, nullable=False, default=datetime.now())
 

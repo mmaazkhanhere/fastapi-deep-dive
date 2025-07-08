@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from src.db.models import LearningResource
-from src.schemas.learning_resource_schema import LearningResourceCreate, LearningResource as ILearningBase
+from src.schemas.learning_resource_schema import LearningResourceCreate, LearningResource as ILearningResource
 from src.services.base import BaseService
 
 
@@ -21,3 +22,10 @@ class LearningResourceService(BaseService):
         await self.session.commit()
         await self.session.refresh(db_resource)
         return db_resource
+
+    
+    async def get_all_resources(self):
+        result = await self.session.execute(select(LearningResource))
+        resources = result.scalars().all()
+        # Convert SQLAlchemy models to Pydantic schemas
+        return [ILearningResource.model_validate(resource) for resource in resources]
