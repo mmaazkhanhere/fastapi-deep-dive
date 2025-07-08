@@ -1,8 +1,24 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+from src.backend.session import engine
+from src.db.database import Base
 
 from .routers.resource_router import resource_router
 
-app: FastAPI = FastAPI(title="Learning Path API", version="0.1.0")
+@asynccontextmanager
+async def lifespan(app:FastAPI):
+    print("Application startup")
+    print("Initializing database....")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        print("Database initialized")
+        yield
+    
+        print("Application shutdown")
+
+app: FastAPI = FastAPI(lifespan=lifespan, title="Learning Path API", version="0.1.0")
+
 app.include_router(resource_router)
 
 @app.get('/status')
