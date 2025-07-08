@@ -47,3 +47,22 @@ class LearningResourceService(BaseService):
         await self.session.delete(resource)
         await self.session.commit()
         return resource
+    
+    async def update_resource(self, resource_id: int, new_data: LearningResourceCreate):
+        result = await self.session.execute(select(LearningResource).where(LearningResource.id == resource_id))
+        resource = result.scalars().first()
+        
+        if resource is None:
+            return None
+        
+        resource.title = new_data.title
+        resource.description = new_data.description
+        resource.url = new_data.url
+        resource.resource_type = new_data.resource_type.value 
+        resource.difficulty = new_data.difficulty
+
+
+        await self.session.commit()
+        await self.session.refresh(resource)
+        
+        return ILearningResource.model_validate(resource)

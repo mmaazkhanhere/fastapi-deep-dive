@@ -49,3 +49,15 @@ async def delete_resource(resource_id: int, session: AsyncSession = Depends(get_
         return {"message": "Learning Resource Deleted", "status": 200}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error deleting resource: {str(e)}")
+    
+
+@resource_router.put('/{resource_id}/update', status_code=status.HTTP_200_OK, description="Update a learning resource")
+async def update_resource(resource_id: int, new_resource_data: LearningResourceCreate, session: AsyncSession = Depends(get_async_session)):
+    """FastAPI endpoint to update a resource"""
+    try:
+        resource = await LearningResourceService(session).update_resource(resource_id, new_resource_data)
+        if resource is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
+        return resource
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating resource: {str(e)}")
