@@ -29,3 +29,10 @@ class LearningResourceService(BaseService):
         resources = result.scalars().all()
         # Convert SQLAlchemy models to Pydantic schemas
         return [ILearningResource.model_validate(resource) for resource in resources]
+    
+    async def get_resource_by_resource_id(self, resource_id: int):
+        result = await self.session.execute(select(LearningResource).where(LearningResource.id == resource_id))
+        resource = result.scalars().first()
+        if resource is None:
+            return None
+        return ILearningResource.model_validate(resource)

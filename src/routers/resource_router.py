@@ -19,8 +19,21 @@ async def create_resource(resource_data: LearningResourceCreate, session: AsyncS
 
 @resource_router.get("/", status_code=status.HTTP_200_OK, description="Get All Learning Resources")
 async def get_resources(session: AsyncSession = Depends(get_async_session))-> list[LearningResource]:
+    """FastAPI endpoint to get all resources"""
     try:
         resources = await LearningResourceService(session).get_all_resources()
         return resources
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error getting resources: {str(e)}")
+    
+
+@resource_router.get('/{resource_id}', status_code=status.HTTP_200_OK, description="Get learning resource of a given ID")
+async def get_resource_by_id(resource_id: int, session: AsyncSession = Depends(get_async_session))->LearningResource:
+    """FastAPI endpoint to get a resource by ID"""
+    try:
+        resource = await LearningResourceService(session).get_resource_by_resource_id(resource_id)
+        if resource is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
+        return resource
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error getting resource: {str(e)}")
