@@ -4,7 +4,7 @@ from sqlalchemy import select
 from src.db.models import User
 from src.schemas.user_schema import UserCreate, UserResponse
 from src.services.base import BaseService
-from src.backend.security import get_password_hash, verify_password
+from src.utils.auth_utils import get_password_hash, verify_password
 
 class UserService(BaseService):
     def __init__(self, session: AsyncSession):
@@ -37,6 +37,11 @@ class UserService(BaseService):
         users = results.scalars().all()
         return [UserResponse.model_validate(user) for user in users]
     
+    async def get_user_with_email(self, email: str):
+        result = await self.session.execute(select(User).where(User.email == email))
+        user = result.scalar_one_or_none() 
+        return UserResponse.model_validate(user)
+    
 
     async def authenticate_user(self, email: str, password: str):
         """
@@ -51,11 +56,10 @@ class UserService(BaseService):
         if not user:
             return None # User not found
 
-        # 2. Verify password
-        # Ensure that user.password is the hashed password from the DB
-        if not await verify_password(password, user.hashed_password):
-            print("Correct Password: False") # This print confirms a password mismatch
-            return None # Password does not match
 
-        print("Correct Password: True") # This would confirm a successful password match
-        return user # Return the user object if authenticated
+        if not await verify_password(password, user.hashed_password):
+            print("Correct Password: False")
+            return None 
+
+        print("Correct Password: True") 
+        return user 

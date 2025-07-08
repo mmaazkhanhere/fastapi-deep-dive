@@ -2,7 +2,6 @@ from typing import Annotated
 from datetime import timedelta, datetime
 
 from fastapi import APIRouter, Depends, status, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
