@@ -5,12 +5,16 @@ from sqlalchemy import Enum as SQLAlchemyEnum
 
 from .database import Base
 
-# Define your Python Enum first
-class LearningResourceType(Enum):
-    article = "article"
-    video = 'video'
-    course = 'course'
-    book = 'book'
+
+class User(Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    name = Column(String, nullable=False, index=True)
+    email = Column(String, nullable=False, unique=True)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.now())
+
 
 class LearningResource(Base):
     __tablename__ = "learning_resource" 
@@ -22,4 +26,6 @@ class LearningResource(Base):
     resource_type = Column(String, nullable=False)
     difficulty = Column(Integer, default=1)
     created_at = Column(DateTime, nullable=False, default=datetime.now())
+
+
 
