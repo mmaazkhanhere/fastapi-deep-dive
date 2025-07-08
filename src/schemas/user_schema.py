@@ -23,4 +23,6 @@ class UserResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
+class UserCredentials(BaseModel):
+    email: EmailStr = Field(description="Email of the user")
+    password: str = Field(description="password")

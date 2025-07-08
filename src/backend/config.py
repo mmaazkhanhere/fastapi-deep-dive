@@ -31,6 +31,9 @@ class Config(DatabaseConfig):
     """
 
     database: DatabaseConfig = DatabaseConfig()
+    secret_key: str | None = os.getenv("SECRET_KEY")
+    token_expiry: int = 15
+    algorithm: str | None = os.getenv("ALGORITHM")
     token_key: str = ""
 
 
