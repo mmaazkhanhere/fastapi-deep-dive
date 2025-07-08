@@ -1,34 +1,37 @@
 import os
-from pydantic import BaseModel, computed_field
+from dotenv import load_dotenv
+
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+load_dotenv()
 
 class DatabaseConfig(BaseModel):
     """
-    Configuration parameters for the the PostgreSQL database backend
+    Configuration for the Postgres database backend
     
-    This model defines the necessary connection details for SQLAlchemy to establish a connection to the database
-
     Attributes:
-    dsn: Data source for connecting to the target database
+    dsn: Data source for connecting with the target database
     """
-    dsn: str = "postgresql+asyncpg://postgres:password@localhost:5434/fastapi_db"
+
+    db_url: str | None = os.getenv("DB_URL")
+    if db_url is None:
+        raise ValueError("Database url is missing")
     
-class Config(BaseSettings):
+    dsn: str = db_url
+
+
+class Config(DatabaseConfig):
     """
     Main application configuration parameters for the FastAPI backend
 
-    This class leverages Pydantic Bases Settings to automatically load the configuration values from various
-    resources, prioritizing in the following order
-
-    1- Environment variables
-    2- .env variables
-    3- Default values specified directly within the Config class
-
     Attributes:
-    database: An embedded Pydantic model holding all database-specific configuration settings
-    token_key: A secret key for security-related operations
+    database: An embedded Pydantic model holding all database specific configuration
+    token: A secret key for security-related operations
     """
+
     database: DatabaseConfig = DatabaseConfig()
     token_key: str = ""
+
 
 config = Config()
