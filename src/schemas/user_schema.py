@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
 class UserBase(BaseModel):
     name: str = Field(description="Full name of the user", min_length=1)
@@ -16,10 +16,11 @@ class User(UserBase):
 
 
 class UserResponse(BaseModel):
-    id: str = Field(description="Id of the user")
+    id: int = Field(description="Id of the user")
     name: str = Field(description="Name of the user")
     email: EmailStr = Field(description="Email of the user")
     is_active: bool = Field(description="Is the user active")
 
+    model_config = ConfigDict(from_attributes=True)
 
 

@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from src.db.models import User
-from src.schemas.user_schema import UserCreate
+from src.schemas.user_schema import UserCreate, UserResponse
 from src.services.base import BaseService
 from src.backend.security import get_password_hash
 
@@ -31,3 +31,8 @@ class UserService(BaseService):
         await self.session.commit()
         await self.session.refresh(user_data)
         return user_data
+
+    async def get_all_users(self):
+        results = await self.session.execute(select(User))
+        users = results.scalars().all()
+        return [UserResponse.model_validate(user) for user in users]

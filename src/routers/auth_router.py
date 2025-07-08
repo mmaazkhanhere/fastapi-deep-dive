@@ -18,3 +18,12 @@ async def register_user(user: UserCreate, session:AsyncSession = Depends(get_asy
     except Exception as e:
         raise ValueError(f"Error while creating user: {e}")
     
+
+@auth_router.get("/", status_code=status.HTTP_200_OK, description="Get all users", response_model=list[UserResponse])
+async def get_users(session: AsyncSession = Depends(get_async_session)):
+    """FastAPI endpoint to get all users"""
+    try:
+        users = await UserService(session).get_all_users()
+        return users
+    except Exception as e:
+        raise ValueError(f"Error while getting users: {e}")
