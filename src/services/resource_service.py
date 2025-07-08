@@ -15,7 +15,8 @@ class LearningResourceService(BaseService):
             url=resource.url, 
             resource_type=resource.resource_type.value, 
             difficulty=resource.difficulty,
-        )
+        ) #we have to destructure it because resource represent incoming data from client while the LearningResource is SQL Model
+        # so they are not compatible 
 
         self.session.add(db_resource)
         await self.session.commit() 

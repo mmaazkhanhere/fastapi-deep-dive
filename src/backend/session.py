@@ -1,39 +1,35 @@
-# src/backend/session.py
+# crucial for managing async database sessions in FastAPI using SQLALchemy
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from contextlib import asynccontextmanager # Important for async dependencies
+from contextlib import asynccontextmanager 
 from typing import AsyncIterator
 
-# Assuming config.py and database.dsn are set up for postgresql+asyncpg
-from src.backend.config import config # Assuming config.py exists and has DSN
 
-# Ensure your DSN uses postgresql+asyncpg
-# Example: postgresql+asyncpg://user:pass@host:port/dbname
-engine = create_async_engine(config.database.dsn)
+from src.backend.config import config 
 
-# Use AsyncSession from sqlalchemy.ext.asyncio
+
+engine = create_async_engine(config.database.dsn) #initialize async SQLAlchemy engine and is responsible for interacting with the database
+
+
 AsyncSessionFactory = sessionmaker(
-    bind=engine,
-    class_=AsyncSession, # Specify AsyncSession here
-    autocommit=False,
-    autoflush=False,
+    bind=engine, #bind session factory to the engine. Any sessions created by AsyncSessionFactory will use this engine to connect with the database
+    class_=AsyncSession, 
+    autoflush=False, #transactions are not automatically committed and you need to explicitly call session.commit()
     expire_on_commit=False,
 )
 
-# This is your async dependency for FastAPI
-async def get_async_session() -> AsyncIterator[AsyncSession]:
-    async with AsyncSessionFactory() as session:
+
+async def get_async_session() -> AsyncIterator[AsyncSession]: #async generator function designed to be used as FastAPI dependency
+    async with AsyncSessionFactory() as session: #create a new AsyncSession and enters its async context
         try:
-            yield session
+            yield session #perform database operation using session
         except Exception:
-            await session.rollback() # Use await for async rollback
+            await session.rollback() # if any error occurs, rollback the transaction
             raise
         finally:
-            await session.close() # Use await for async close
+            await session.close() # close the database connection regardless if exception is raised
 
-# You generally won't need an explicit 'open_session' context manager
-# if you're using 'get_async_session' as a FastAPI dependency directly.
-# If you need it for other async tasks, it would look like this:
+
 @asynccontextmanager
 async def open_async_session() -> AsyncIterator[AsyncSession]:
     async with AsyncSessionFactory() as session:
