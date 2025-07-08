@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, EmailStr
 class UserBase(BaseModel):
     name: str = Field(description="Full name of the user", min_length=1)
     email: EmailStr = Field(description="Email of the user")
-    hashed_password: str = Field(description="Hashed password")
+    password: str = Field(description="password")
     is_active: bool = Field(description="Is the user active")
 
 class UserCreate(UserBase):
