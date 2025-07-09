@@ -25,6 +25,7 @@ class UserService(BaseService):
             email=user_email,
             hashed_password=hashed_password,
             is_active=user.is_active,
+            role = user.role.value
         )
 
         self.session.add(user_data)

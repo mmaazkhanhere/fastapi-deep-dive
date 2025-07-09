@@ -22,6 +22,17 @@ class OAuth2EmailPasswordRequestForm(OAuth2PasswordRequestForm):
     ):
         super().__init__(username=email, password=password)
 
+        
+@auth_router.get("/", status_code=status.HTTP_200_OK, description="Get all users", response_model=list[UserResponse])
+async def get_users(session: AsyncSession = Depends(get_async_session)):
+    """FastAPI endpoint to get all users"""
+    try:
+        users = await UserService(session).get_all_users()
+        return users
+    except Exception as e:
+        raise ValueError(f"Error while getting users: {e}")
+
+
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED, description="Register new users")
 async def register_user(user: UserCreate, session:AsyncSession = Depends(get_async_session)):
     """FastAPI endpoint to register user"""
@@ -33,20 +44,11 @@ async def register_user(user: UserCreate, session:AsyncSession = Depends(get_asy
     except Exception as e:
         raise ValueError(f"Error while creating user: {e}")
     
-
-@auth_router.get("/", status_code=status.HTTP_200_OK, description="Get all users", response_model=list[UserResponse])
-async def get_users(session: AsyncSession = Depends(get_async_session)):
-    """FastAPI endpoint to get all users"""
-    try:
-        users = await UserService(session).get_all_users()
-        return users
-    except Exception as e:
-        raise ValueError(f"Error while getting users: {e}")
     
 
 @auth_router.post("/token", status_code=status.HTTP_200_OK, description="Login user", response_model=Token)
 async def access_token(
-    form_data: OAuth2EmailPasswordRequestForm = Depends(),  # Changed to use standard form
+    form_data: OAuth2PasswordRequestForm = Depends(),  # Use standard form
     session: AsyncSession = Depends(get_async_session)
 ):
 
@@ -61,6 +63,6 @@ async def access_token(
             headers={"WWW-Authenticate": "Bearer"}
         )
     access_token_expires = timedelta(minutes=config.token_expiry)
-    access_token = create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
+    access_token = create_access_token(data={"sub": user.email, "role": user.role}, expires_delta=access_token_expires)
 
     return Token(access_token=access_token, token_type="bearer")

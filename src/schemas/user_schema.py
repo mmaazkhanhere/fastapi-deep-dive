@@ -1,11 +1,18 @@
 from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
+
+class UserRole(Enum):
+    learner = "learner"
+    admin = "admin"
+    contributor = "contributor"
 
 class UserBase(BaseModel):
     name: str = Field(description="Full name of the user", min_length=1)
     email: EmailStr = Field(description="Email of the user")
     password: str = Field(description="password")
     is_active: bool = Field(description="Is the user active")
+    role: UserRole = Field(description="Access role of the user")
 
 class UserCreate(UserBase):
     pass
@@ -20,6 +27,7 @@ class UserResponse(BaseModel):
     name: str = Field(description="Name of the user")
     email: EmailStr = Field(description="Email of the user")
     is_active: bool = Field(description="Is the user active")
+    role: UserRole = Field(description="Access role of the user")
 
     model_config = ConfigDict(from_attributes=True)
 
