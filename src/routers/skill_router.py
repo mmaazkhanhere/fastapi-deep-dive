@@ -16,3 +16,23 @@ async def get_skills(session: AsyncSession = Depends(get_async_session)) -> list
         return skills
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error getting skills: {str(e)}")
+    
+
+@skill_router.post("/create", status_code=status.HTTP_201_CREATED, description="Create a new skill")
+async def create_skill(skill: SkillCreate, session: AsyncSession = Depends(get_async_session), current_user: dict = Depends(get_current_contributor_or_admin_user)):
+    try:
+        await SkillService(session).create_skill(skill)
+        return {"message": "Skill Created", "status": 201}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error creating skill: {str(e)}")
+    
+
+@skill_router.get('/{skill_id}', status_code=status.HTTP_200_OK, description="Get skill of a given ID")
+async def get_skill_by_id(skill_id: int, session: AsyncSession = Depends(get_async_session))->Skill:
+    try:
+        skill = await SkillService(session).get_skill_by_id(skill_id)
+        if skill is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Skill not found")
+        return skill
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error getting skill: {str(e)}")
