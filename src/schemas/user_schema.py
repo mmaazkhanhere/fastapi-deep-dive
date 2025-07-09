@@ -2,6 +2,9 @@ from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
+from src.schemas.skills_schema import Skill
+from src.schemas.learning_resource_schema import LearningResource
+
 class UserRole(Enum):
     learner = "learner"
     admin = "admin"
@@ -19,6 +22,8 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int = Field(description="Id of the user", ge=1)
+    skills: list[Skill] = Field(description="Skills of the user", default=[])
+    resources: list[LearningResource] = Field(description="Resources of the user", default=[])
     created_at: datetime = Field(description="Creation timestamp of the user", default=datetime.now())
 
 

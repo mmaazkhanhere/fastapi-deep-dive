@@ -3,6 +3,8 @@ from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 
+from src.schemas.skills_schema import Skill
+
 class LearningResourceType(Enum):
     article = "article"
     video = 'video'
@@ -22,5 +24,6 @@ class LearningResourceCreate(LearningResourceBase):
 class LearningResource(LearningResourceBase):
     id: int = Field(description="Unique id of the learning resource")
     created_at: datetime = Field(description="Creation timestamp of the learning resource", default=datetime.now())
+    skills: list[Skill] = Field(description="Skill user can learn from the learning resource", default=[])
 
     model_config = ConfigDict(from_attributes=True)

@@ -64,3 +64,15 @@ class UserService(BaseService):
 
         print("Correct Password: True") 
         return user 
+    
+    async def create_user_skill(self, user_id: int, skill):
+        user = await self.session.execute(select(User).where(User.id == user_id))
+        user = user.scalar_one_or_none()
+
+        if user is None:
+            return None
+
+        user.skills.append(skill)
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user
