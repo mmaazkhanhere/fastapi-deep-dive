@@ -31,3 +31,23 @@ class SkillService(BaseService):
         if skill is None:
             return None
         return Skill.model_validate(skill)
+    
+    async def update_skill(self, skill_id: int, new_data: SkillCreate):
+        result = await self.session.execute(select(Skills).where(Skills.id == skill_id))
+        skill = result.scalars().first()
+        if skill is None:
+            return None
+        skill.title = new_data.title
+        await self.session.commit()
+        await self.session.refresh(skill)
+        return Skill.model_validate(skill)
+    
+
+    async def delete_skill(self, skill_id: int):
+        result = await self.session.execute(select(Skills).where(Skills.id == skill_id))
+        skill = result.scalars().first()
+        if skill is None:
+            return None
+        await self.session.delete(skill)
+        await self.session.commit()
+        return skill
