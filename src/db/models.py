@@ -29,4 +29,13 @@ class LearningResource(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.now())
 
 
+class SkillsI(Base):
+    __tablename__ = "skills"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    title = Column(String, index=True, nullable=False)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.now())
+
+
 
