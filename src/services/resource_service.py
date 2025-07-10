@@ -1,8 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
-from src.db.models import LearningResource
+from src.db.models import LearningResource, Skills
 from src.schemas.learning_resource_schema import LearningResourceCreate, LearningResource as ILearningResource
+from src.schemas.skills_schema import SkillCreate
 from src.services.base import BaseService
 
 
@@ -66,3 +68,37 @@ class LearningResourceService(BaseService):
         await self.session.refresh(resource)
         
         return ILearningResource.model_validate(resource)
+
+
+    async def learning_resource_skill(self, resource_id: int, user_id: int, skill_data: SkillCreate):
+        result = await self.session.execute(
+            select(LearningResource)
+            .options(selectinload(LearningResource.skills))
+            .where(LearningResource.id == resource_id)
+        )
+        resource = result.scalars().first()
+
+        if resource is None:
+            return None
+
+        # Check for existing skill
+        skill_result = await self.session.execute(
+            select(Skills).where(
+                Skills.title == skill_data.title,
+                Skills.user_id == user_id
+            )
+        )
+        existing_skill = skill_result.scalars().first()
+
+        # Create new skill if needed
+        if existing_skill:
+            skill = existing_skill
+        else:
+            skill = Skills(title=skill_data.title, user_id=user_id)
+            self.session.add(skill)
+            await self.session.flush()
+
+        # Associate skill with resource
+        resource.skill_id = skill.id
+        await self.session.commit()
+        return skill  # Return only the skill object

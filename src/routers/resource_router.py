@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.schemas.learning_resource_schema import LearningResourceCreate, LearningResource
+from src.schemas.learning_resource_schema import LearningResourceCreate, LearningResource as ILearningResource
+from src.db.models import LearningResource
 from src.schemas.user_schema import User
+from src.schemas.skills_schema import SkillCreate
 from src.backend.session import get_async_session
 from src.backend.security import get_current_contributor_or_admin_user, get_current_admin_user
 from src.services.resource_service import LearningResourceService
@@ -11,7 +13,7 @@ resource_router: APIRouter = APIRouter(prefix="/resources", tags=["Learning Reso
 
 
 @resource_router.get("/", status_code=status.HTTP_200_OK, description="Get All Learning Resources")
-async def get_resources(session: AsyncSession = Depends(get_async_session))-> list[LearningResource]:
+async def get_resources(session: AsyncSession = Depends(get_async_session))-> list[ILearningResource]:
     """FastAPI endpoint to get all resources"""
     try:
         resources = await LearningResourceService(session).get_all_resources()
@@ -31,7 +33,7 @@ async def create_resource(resource_data: LearningResourceCreate, session: AsyncS
         
 
 @resource_router.get('/{resource_id}', status_code=status.HTTP_200_OK, description="Get learning resource of a given ID")
-async def get_resource_by_id(resource_id: int, session: AsyncSession = Depends(get_async_session), current_user: User = Depends(get_current_contributor_or_admin_user) )->LearningResource:
+async def get_resource_by_id(resource_id: int, session: AsyncSession = Depends(get_async_session), current_user: User = Depends(get_current_contributor_or_admin_user) )->ILearningResource:
     """FastAPI endpoint to get a resource by ID"""
     try:
         resource = await LearningResourceService(session).get_resource_by_resource_id(resource_id)
@@ -40,6 +42,7 @@ async def get_resource_by_id(resource_id: int, session: AsyncSession = Depends(g
         return resource
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error getting resource: {str(e)}")
+
 
 @resource_router.put('/{resource_id}/update', status_code=status.HTTP_200_OK, description="Update a learning resource")
 async def update_resource(resource_id: int, new_resource_data: LearningResourceCreate, session: AsyncSession = Depends(get_async_session), current_user: User = Depends(get_current_contributor_or_admin_user)):
@@ -51,6 +54,7 @@ async def update_resource(resource_id: int, new_resource_data: LearningResourceC
         return resource
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating resource: {str(e)}")    
+
 
 @resource_router.delete('/{resource_id}/delete', status_code=status.HTTP_200_OK, description="Delete a learning resource record")
 async def delete_resource(resource_id: int, session: AsyncSession = Depends(get_async_session), current_user: User = Depends(get_current_contributor_or_admin_user)):
@@ -74,3 +78,27 @@ async def delete_admin_resource(resource_id: int, session: AsyncSession = Depend
         return {"message": "Learning Resource Deleted", "status": 200}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error deleting resource: {str(e)}")
+    
+
+@resource_router.post("/resources/{resource_id}/skills/{skill_id}", status_code=status.HTTP_200_OK, description="Create skill for a given resource")
+async def add_skill_to_resource(
+    resource_id: int,
+    user_id: int,
+    skill_data: SkillCreate,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_contributor_or_admin_user)
+):
+    service = LearningResourceService(session)
+    
+    # Use SQLAlchemy model here
+    resource = await session.get(LearningResource, resource_id)
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    
+    # Create and assign skill
+    skill = await service.learning_resource_skill(resource_id, user_id, skill_data)
+    
+    if skill is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+
+    return skill
