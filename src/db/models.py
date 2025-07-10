@@ -35,7 +35,6 @@ class LearningResource(Base):
     skill_id = Column(Integer, ForeignKey("skills.id"))
 
     user = relationship("User", back_populates="learning_resources")
-    # This relationship also refers to "Skills" (plural)
     skill = relationship("Skills")
 
 
