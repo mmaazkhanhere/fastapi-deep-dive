@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, status, HTTPException, Form
+from fastapi import APIRouter, Depends, status, HTTPException, Form, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +11,7 @@ from src.backend.session import get_async_session
 from src.backend.config import config
 from src.backend.security import create_access_token
 from src.services.user_service import UserService
+from src.tasks import send_email_notification
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -34,12 +35,13 @@ async def get_users(session: AsyncSession = Depends(get_async_session)):
 
 
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED, description="Register new users")
-async def register_user(user: UserCreate, session:AsyncSession = Depends(get_async_session)):
+async def register_user(user: UserCreate, background_tasks: BackgroundTasks, session:AsyncSession = Depends(get_async_session)):
     """FastAPI endpoint to register user"""
     try:
         user = await UserService(session).create_new_user(user)
         if user == "User already exists":
             return {"message": "User already exists", "status": 400}
+        background_tasks.add_task(send_email_notification, user.email, "Welcome to our platform", "Thank you for registering")
         return {"message": "User Created", "status": 201}
     except Exception as e:
         raise ValueError(f"Error while creating user: {e}")
