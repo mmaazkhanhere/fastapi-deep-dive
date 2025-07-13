@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.schemas.learning_resource_schema import LearningResourceCreate, LearningResource as ILearningResource
@@ -8,6 +8,7 @@ from src.schemas.skills_schema import SkillCreate
 from src.backend.session import get_async_session
 from src.backend.security import get_current_contributor_or_admin_user, get_current_admin_user
 from src.services.resource_service import LearningResourceService
+from src.tasks import log_resource_view
 
 resource_router: APIRouter = APIRouter(prefix="/resources", tags=["Learning Resource"])
 
@@ -118,3 +119,9 @@ async def delete_skill_from_resource(
     if skill is None:
         raise HTTPException(status_code=404, detail="Skill not found")
     return skill
+
+
+@resource_router.post("/{resource_id}/log_view", status_code=status.HTTP_200_OK)
+def view_logs(resource_id: int, user_id:int, background_task: BackgroundTasks):
+    background_task.add_task(log_resource_view, resource_id, user_id)
+    return {"message": "View logged"}
