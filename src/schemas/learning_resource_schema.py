@@ -19,13 +19,15 @@ class LearningResourceBase(BaseModel):
     difficulty: int = Field(..., description="Difficulty level of the learning resource", ge=1, le=5)
 
 class LearningResourceCreate(LearningResourceBase):
-    # When creating, you might only provide skill_id, or let the service handle skill creation/association
-    skill_ids: list[int] | None = Field(None, description="ID of the skill associated with the learning resource")
+    pass
+    
 
 class LearningResource(LearningResourceBase):
     id: int = Field(description="Unique id of the learning resource")
     created_at: datetime = Field(description="Creation timestamp of the learning resource", default=datetime.now())
     # Change 'skills' to 'skill' and make it optional, or directly reference the Skill Pydantic model
+    skill_ids: list[int] | None = Field(None, description="ID of the skill associated with the learning resource")
     skills: list[Skill] | None = Field(description="Skill user can learn from the learning resource", default=None)
+    image_path: str | None = Field(description="Image path of the learning resource", default=None)
 
     model_config = ConfigDict(from_attributes=True)

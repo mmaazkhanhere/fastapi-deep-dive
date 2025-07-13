@@ -137,3 +137,20 @@ class LearningResourceService(BaseService):
         await self.session.commit()
         await self.session.refresh(resource)
         return {"message": "Skill deleted successfully"}
+    
+
+    async def add_image_resource(self, resource_id: int, image_path: str):
+        result = await self.session.execute(
+            select(LearningResource)
+            .options(joinedload(LearningResource.skills)) # <-- Eager load skills here
+            .where(LearningResource.id == resource_id)
+        )
+        resource = result.scalars().first()
+
+        if resource is None:
+            return None
+
+        resource.image_path = image_path
+        await self.session.commit()
+        await self.session.refresh(resource)
+        return ILearningResource.model_validate(resource)

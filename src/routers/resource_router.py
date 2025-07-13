@@ -131,7 +131,7 @@ def view_logs(resource_id: int, user_id:int, background_task: BackgroundTasks):
 
 
 @resource_router.post("/{resource_id}/upload_image", status_code=status.HTTP_200_OK, description="Upload image for the resource")
-async def upload_resource_image(resource_id: int, image_file: UploadFile = File(...)):
+async def upload_resource_image(resource_id: int, image_file: UploadFile = File(...), session: AsyncSession = Depends(get_async_session)):
     BASE_DIR = Path(__file__).resolve().parent.parent.parent
     STATIC_DIR = BASE_DIR / "static"
     RESOURCE_IMAGES_DIR = STATIC_DIR / "resource_images"
@@ -144,13 +144,20 @@ async def upload_resource_image(resource_id: int, image_file: UploadFile = File(
 
     print(f"Saving to: {full_file_path}")
     try:
-
         RESOURCE_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+
+        if not image_file.content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only image files are allowed."
+        )
 
         with open(full_file_path, "wb") as file_object: 
             shutil.copyfileobj(image_file.file, file_object)
             
             image_url = f"/static/resource_images/{unique_filename}"
+
+            await LearningResourceService(session).add_image_resource(resource_id, image_url)
             
             return {
                 "message": "Image uploaded successfully",

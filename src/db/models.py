@@ -37,6 +37,7 @@ class LearningResource(Base):
     resource_type = Column(String, nullable=False)
     difficulty = Column(Integer, default=1)
     created_at = Column(DateTime, nullable=False, default=datetime.now())
+    image_path = Column(String, nullable=True)
     user_id = Column(Integer, ForeignKey("user.id"))
 
     user = relationship("User", back_populates="learning_resources")
