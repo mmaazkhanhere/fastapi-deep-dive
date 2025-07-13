@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 from src.db.models import LearningResource, Skills
 from src.schemas.learning_resource_schema import LearningResourceCreate, LearningResource as ILearningResource
@@ -26,11 +26,13 @@ class LearningResourceService(BaseService):
         return db_resource
 
     
-    async def get_all_resources(self):
-        result = await self.session.execute(select(LearningResource))
-        resources = result.scalars().all()
-        # Convert SQLAlchemy models to Pydantic schemas
+    async def get_all_resources(self) -> list[ILearningResource]:
+        result = await self.session.execute(
+            select(LearningResource).options(joinedload(LearningResource.skills))
+        )
+        resources = result.scalars().unique().all()
         return [ILearningResource.model_validate(resource) for resource in resources]
+
     
 
     async def get_resource_by_resource_id(self, resource_id: int):
@@ -98,7 +100,40 @@ class LearningResourceService(BaseService):
             self.session.add(skill)
             await self.session.flush()
 
+        if skill not in resource.skills:
+            resource.skills.append(skill)
+        else:
+            print("Skill already exists")
+
         # Associate skill with resource
-        resource.skill_id = skill.id
         await self.session.commit()
-        return skill  # Return only the skill object
+        await self.session.refresh(resource) # Refresh resource to load the updated skills
+        return skill
+    
+
+    async def delete_learning_resource_skill(self, resource_id: int, user_id: int, skill_id: int):
+        result = await self.session.execute(
+            select(LearningResource)
+            .options(selectinload(LearningResource.skills))
+            .where(LearningResource.id == resource_id)
+        )
+        resource = result.scalars().first()
+
+        if resource is None:
+            return None
+
+        # Find the skill to delete
+        skill_to_remove = None
+        for skill in resource.skills:
+            if skill.id == skill_id:
+                skill_to_remove = skill
+                break
+
+        if skill_to_remove  is None:
+            return None
+
+        # Delete the skill
+        await self.session.delete(skill_to_remove )
+        await self.session.commit()
+        await self.session.refresh(resource)
+        return {"message": "Skill deleted successfully"}

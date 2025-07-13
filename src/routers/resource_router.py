@@ -91,14 +91,30 @@ async def add_skill_to_resource(
     service = LearningResourceService(session)
     
     # Use SQLAlchemy model here
+    skill = await service.learning_resource_skill(resource_id, user_id, skill_data) 
+        
+    if skill is None:
+        # This means the resource was not found by the service method
+        raise HTTPException(status_code=404, detail="Resource not found or skill could not be associated.")
+
+    # Return the associated skill or a confirmation message
+    return {"message": "Skill added to resource successfully", "skill": skill}
+
+
+@resource_router.delete("/resources/{resource_id}/skills/{skill_id}/delete", status_code=status.HTTP_200_OK, description="Delete skill for a given resource")
+async def delete_skill_from_resource(
+    resource_id: int,
+    user_id: int,
+    skill_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_contributor_or_admin_user)
+):
+    service = LearningResourceService(session)
     resource = await session.get(LearningResource, resource_id)
     if not resource:
         raise HTTPException(status_code=404, detail="Resource not found")
     
-    # Create and assign skill
-    skill = await service.learning_resource_skill(resource_id, user_id, skill_data)
-    
+    skill = await service.delete_learning_resource_skill(resource_id, user_id, skill_id)
     if skill is None:
-        raise HTTPException(status_code=404, detail="Resource not found")
-
+        raise HTTPException(status_code=404, detail="Skill not found")
     return skill
