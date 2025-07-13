@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from uuid import uuid4
+import shutil 
+from pathlib import Path
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.schemas.learning_resource_schema import LearningResourceCreate, LearningResource as ILearningResource
@@ -125,3 +128,41 @@ async def delete_skill_from_resource(
 def view_logs(resource_id: int, user_id:int, background_task: BackgroundTasks):
     background_task.add_task(log_resource_view, resource_id, user_id)
     return {"message": "View logged"}
+
+
+@resource_router.post("/{resource_id}/upload_image", status_code=status.HTTP_200_OK, description="Upload image for the resource")
+async def upload_resource_image(resource_id: int, image_file: UploadFile = File(...)):
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+    STATIC_DIR = BASE_DIR / "static"
+    RESOURCE_IMAGES_DIR = STATIC_DIR / "resource_images"
+
+
+    file_extension = Path(image_file.filename).suffix
+    unique_filename = f"{uuid4()}{file_extension}"
+
+    full_file_path = RESOURCE_IMAGES_DIR / unique_filename
+
+    print(f"Saving to: {full_file_path}")
+    try:
+
+        RESOURCE_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+
+        with open(full_file_path, "wb") as file_object: 
+            shutil.copyfileobj(image_file.file, file_object)
+            
+            image_url = f"/static/resource_images/{unique_filename}"
+            
+            return {
+                "message": "Image uploaded successfully",
+                "filename": unique_filename,
+                "content_type": image_file.content_type,
+                "file_size": image_file.size,
+                "image_url": image_url
+            }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error uploading image: {str(e)}"
+        )
+    finally:
+        image_file.file.close()

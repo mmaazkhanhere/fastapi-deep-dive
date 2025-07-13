@@ -1,5 +1,6 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from src.backend.session import engine
 from src.db.database import Base
@@ -20,7 +21,9 @@ async def lifespan(app:FastAPI):
     
         print("Application shutdown")
 
-app: FastAPI = FastAPI(lifespan=lifespan, title="Learning Path API", version="0.1.0")
+app: FastAPI = FastAPI(lifespan=lifespan, title="Learning Path API", version="0.1.1")
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(resource_router)
 app.include_router(auth_router)
