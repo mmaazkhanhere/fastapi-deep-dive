@@ -35,6 +35,7 @@ class Config(DatabaseConfig):
     token_expiry: int = 15
     algorithm: str | None = os.getenv("ALGORITHM")
     token_key: str = ""
+    REDIS_URL: str = "redis://localhost:6379"
 
 
 config = Config()

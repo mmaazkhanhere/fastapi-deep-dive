@@ -1,9 +1,16 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+
+from redis import asyncio as aioredis
+
 from src.backend.session import engine
 from src.db.database import Base
+from src.backend.config import config
 
 from .routers.resource_router import resource_router
 from .routers.auth_router import auth_router
@@ -17,6 +24,11 @@ async def lifespan(app:FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         print("Database initialized")
+
+        redis_client = aioredis.from_url(config.REDIS_URL, encoding="utf8", decode_responses=True)
+        FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
+        print("FastAPI-Cache initialized with Redis.")
+
         yield
     
         print("Application shutdown")
